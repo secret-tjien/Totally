@@ -72,6 +72,7 @@ export default class MainGame extends Phaser.Scene {
 
   init(data) {
     this.levelNum = data.level || 1;
+    GameConfig.saveLevel(this.levelNum);
     this.levelData = generateLevel(this.levelNum);
     this.outcomes = [...this.levelData.outcomes];
     this.inputs = [...this.levelData.inputs];
@@ -353,6 +354,10 @@ export default class MainGame extends Phaser.Scene {
     }
   }
 
+  giveHint() {
+    this.showOnboarding(true, true);
+  }
+
   showOnboarding(force = false, isHint = false) {
     if (!isHint && this.levelNum > GameConfig.maxAssistLevel) return;
     if (this.onboardingActive) {
@@ -528,11 +533,39 @@ export default class MainGame extends Phaser.Scene {
           this.scene.resume();
           this.sound.resumeAll();
           if (success) {
-            this.showOnboarding(true, true);
+            this.giveHint();
+          }
+        });
+      } else if (GameConfig.googleAdsEnabled && window.h5AdsReady && typeof window.adBreak !== 'undefined') {
+        this.scene.pause();
+        this.sound.pauseAll();
+        let rewardEarned = false;
+        
+        window.adBreak({
+          type: 'reward',
+          name: 'hint_reward',
+          beforeReward: (showAdFn) => {
+            showAdFn();
+          },
+          adDismissed: () => {
+            rewardEarned = false;
+          },
+          adViewed: () => {
+            rewardEarned = true;
+          },
+          adBreakDone: (placementInfo) => {
+            this.scene.resume();
+            this.sound.resumeAll();
+            // If an ad was successfully viewed, give the hint.
+            // If no ad was available (e.g. notReady), we give the hint anyway so the player isn't stuck.
+            // We only withhold the hint if the user explicitly dismissed the ad before completion.
+            if (rewardEarned || (placementInfo && placementInfo.breakStatus !== 'dismissed')) {
+              this.giveHint();
+            }
           }
         });
       } else {
-        this.showOnboarding(true, true);
+        this.giveHint();
       }
     });
   }
@@ -601,7 +634,7 @@ export default class MainGame extends Phaser.Scene {
         padding: { x: 4, y: 4 }
       }).setOrigin(0.5).setDepth(30).setVisible(false);
 
-      if (!GameConfig.poki) {
+      if (GameConfig.debugCheatsEnabled) {
         orb.on('pointerover', () => debugText.setVisible(true));
         orb.on('pointerout', () => debugText.setVisible(false));
         orb.on('pointerdown', () => debugText.setVisible(true));
@@ -1320,6 +1353,8 @@ export default class MainGame extends Phaser.Scene {
 
   proceedToNextLevel() {
     const nextLevel = this.levelNum + 1;
+    GameConfig.saveLevel(nextLevel);
+    
     const nextPackNum = GameConfig.getLevelPack(nextLevel);
     const nextBgKey = `bg_${nextPackNum}`;
     

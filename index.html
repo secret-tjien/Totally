@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Totally</title>
     <script src="https://game-cdn.poki.com/scripts/v2/poki-sdk.js"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1234567890123456" data-adbreak-test="on" crossorigin="anonymous"></script>
+    <script>
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adBreak = window.adConfig = function(o) { window.adsbygoogle.push(o); }
+      window.adConfig({
+        preloadAdBreaks: 'on',
+        onReady: () => { 
+          console.log("H5 Games Ads ready"); 
+          window.h5AdsReady = true;
+        }
+      });
+    </script>
     <style>
       html, body {
         margin: 0;

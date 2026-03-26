@@ -3,6 +3,8 @@ export const GameConfig = {
   height: 812,
   levelCount: 50,
   poki: false,
+  googleAdsEnabled: false,
+  debugCheatsEnabled: false,
   fancyEffect: true,
   transitionDuration: 2000, // Duration of the ripple transition in ms
   maxAssistLevel: 10,
@@ -192,5 +194,24 @@ export const GameConfig = {
     const start = 29 + (pack - 6) * 10 + 1;
     const end = 29 + (pack - 5) * 10;
     return { start, end };
+  },
+  getSavedLevel: () => {
+    try {
+      const saved = localStorage.getItem('gameLevel');
+      if (saved) {
+        const level = parseInt(saved, 10);
+        if (!isNaN(level) && level > 0) return level;
+      }
+    } catch (e) {
+      console.warn('Could not read saved level from localStorage', e);
+    }
+    return 1;
+  },
+  saveLevel: (level) => {
+    try {
+      localStorage.setItem('gameLevel', level.toString());
+    } catch (e) {
+      console.warn('Could not save level to localStorage', e);
+    }
   }
 };

@@ -10,6 +10,7 @@ export default class UI extends Phaser.Scene {
     this.scene.bringToTop('UI');
     this.sparks = 3;
     this.lang = GameConfig.language;
+    this.cheatIndex = 0;
     
     this.topBar = this.add.graphics();
       
@@ -20,7 +21,7 @@ export default class UI extends Phaser.Scene {
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    if (!GameConfig.poki) {
+    if (GameConfig.debugCheatsEnabled) {
       this.prevLevelBtn = this.add.text(GameConfig.width / 2 - 60, 70, '<', {
         fontFamily: GameConfig.fontFamily,
         fontSize: '24px',
@@ -154,6 +155,44 @@ export default class UI extends Phaser.Scene {
     return flags[lang] || '🇬🇧';
   }
 
+  checkCheat(action) {
+    const CHEAT_CODE = [
+      'sfx_off',
+      'music_off',
+      'lang_en',
+      'lang_nl',
+      'lang_en',
+      'lang_nl',
+      'lang_en',
+      'sfx_on',
+      'music_on'
+    ];
+
+    if (action === CHEAT_CODE[this.cheatIndex]) {
+      this.cheatIndex++;
+      if (this.cheatIndex === CHEAT_CODE.length) {
+        GameConfig.debugCheatsEnabled = !GameConfig.debugCheatsEnabled;
+        this.cheatIndex = 0;
+        
+        // Restart the UI scene to show/hide the buttons
+        this.scene.restart();
+        
+        // Restart MainGame to apply debugText changes
+        const mainGame = this.scene.get('MainGame');
+        if (mainGame) {
+          mainGame.scene.restart({ level: mainGame.levelNum });
+        }
+      }
+    } else {
+      // If the action matches the first step of the cheat code, start over from index 1.
+      if (action === CHEAT_CODE[0]) {
+        this.cheatIndex = 1;
+      } else {
+        this.cheatIndex = 0;
+      }
+    }
+  }
+
   showLanguageMenu() {
     if (this.langMenu) {
       this.langMenu.destroy();
@@ -189,6 +228,7 @@ export default class UI extends Phaser.Scene {
         this.updateUI();
         this.langMenu.destroy();
         this.langMenu = null;
+        this.checkCheat('lang_' + l);
       });
       
       this.langMenu.add(btn);
@@ -218,6 +258,7 @@ export default class UI extends Phaser.Scene {
 
     const sfxSwitch = this.createSlideSwitch(-120, 30, 'SFX', GameConfig.audio.sfxEnabled, () => {
       GameConfig.audio.sfxEnabled = !GameConfig.audio.sfxEnabled;
+      this.checkCheat(GameConfig.audio.sfxEnabled ? 'sfx_on' : 'sfx_off');
       return GameConfig.audio.sfxEnabled;
     });
 
@@ -234,6 +275,7 @@ export default class UI extends Phaser.Scene {
       } else if (GameConfig.audio.musicEnabled) {
         this.sound.play('bgm', { loop: true, volume: 0.5 });
       }
+      this.checkCheat(GameConfig.audio.musicEnabled ? 'music_on' : 'music_off');
       return GameConfig.audio.musicEnabled;
     });
 

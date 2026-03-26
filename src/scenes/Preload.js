@@ -8,7 +8,11 @@ export default class Preload extends Phaser.Scene {
 
   preload() {
     this.load.image('bg', 'bg/000.jpg');
-    this.load.image('bg_1', 'bg/001.jpg'); // Preload level 1 background
+    const savedLevel = GameConfig.getSavedLevel();
+    const packNum = GameConfig.getLevelPack(savedLevel);
+    const fileNum = ((packNum - 1) % 11) + 1;
+    const filename = String(fileNum).padStart(3, '0') + '.jpg';
+    this.load.image(`bg_${packNum}`, `./bg/${filename}`);
     this.load.image('logo', 'bg/Totally Logo.png');
     this.load.image('sogLogo', 'bg/SOGLogo.png');
 
@@ -192,7 +196,8 @@ export default class Preload extends Phaser.Scene {
       // Ripple transition
       if (GameConfig.fancyEffect) {
         // Create the new background behind the old one
-        const newBg = this.add.image(width / 2, height / 2, 'bg_1');
+        const packNum = GameConfig.getLevelPack(GameConfig.getSavedLevel());
+        const newBg = this.add.image(width / 2, height / 2, `bg_${packNum}`);
         const scale = this.bg.scaleY * (this.bg.height / newBg.height);
         newBg.setScale(scale);
         newBg.setDepth(-1);
@@ -218,16 +223,16 @@ export default class Preload extends Phaser.Scene {
             ease: 'Power2',
             onComplete: () => {
               shockwavePipeline.removeShockwave(wave);
-              this.scene.start('MainGame');
+              this.scene.start('MainGame', { level: GameConfig.getSavedLevel() });
               this.scene.start('UI');
             }
           });
         } else {
-          this.scene.start('MainGame');
+          this.scene.start('MainGame', { level: GameConfig.getSavedLevel() });
           this.scene.start('UI');
         }
       } else {
-        this.scene.start('MainGame');
+        this.scene.start('MainGame', { level: GameConfig.getSavedLevel() });
         this.scene.start('UI');
       }
     });
